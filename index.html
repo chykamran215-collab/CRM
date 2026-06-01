@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>FAST Grocery CRM</title>
+<title>FAST Grocery CRM PRO</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 
@@ -12,133 +12,241 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 </head>
 
 <body class="bg-black text-white">
 
-<div class="min-h-screen flex items-center justify-center" id="app">
-  <div class="bg-gray-900 p-6 rounded-xl w-full max-w-md">
+<div class="p-4 max-w-6xl mx-auto">
 
-    <h1 class="text-2xl font-bold text-center mb-4">FAST Grocery CRM</h1>
+<!-- LOGIN -->
+<div id="loginBox" class="max-w-md mx-auto mt-20 bg-gray-900 p-6 rounded-xl">
+  <h1 class="text-2xl font-bold mb-4 text-center">CRM PRO LOGIN</h1>
 
-    <!-- LOGIN -->
-    <div id="loginBox">
-      <input id="email" class="w-full p-2 mb-2 bg-black border border-gray-700" placeholder="Email">
-      <input id="password" type="password" class="w-full p-2 mb-2 bg-black border border-gray-700" placeholder="Password">
+  <input id="email" class="w-full p-2 mb-2 bg-black border border-gray-700" placeholder="Email">
+  <input id="password" type="password" class="w-full p-2 mb-2 bg-black border border-gray-700" placeholder="Password">
 
-      <button onclick="login()" class="w-full bg-green-600 p-2 rounded">
-        Login
-      </button>
-    </div>
-
-    <!-- DASHBOARD -->
-    <div id="dashboard" class="hidden">
-      
-      <p class="mb-2">👋 Welcome Admin</p>
-
-      <div class="grid grid-cols-2 gap-2">
-        <div class="bg-gray-800 p-3 rounded">
-          <p>Total Customers</p>
-          <h2 id="customers">0</h2>
-        </div>
-
-        <div class="bg-gray-800 p-3 rounded">
-          <p>Total Orders</p>
-          <h2 id="orders">0</h2>
-        </div>
-      </div>
-
-      <hr class="my-4 border-gray-700"/>
-
-      <h2 class="font-bold mb-2">Add Customer</h2>
-
-      <input id="cname" class="w-full p-2 mb-2 bg-black border border-gray-700" placeholder="Name">
-      <input id="cphone" class="w-full p-2 mb-2 bg-black border border-gray-700" placeholder="Phone">
-
-      <button onclick="addCustomer()" class="w-full bg-blue-600 p-2 rounded">
-        Save Customer
-      </button>
-
-      <button onclick="logout()" class="w-full mt-3 bg-red-600 p-2 rounded">
-        Logout
-      </button>
-
-    </div>
-
-  </div>
+  <button onclick="login()" class="w-full bg-green-600 p-2 rounded">Login</button>
 </div>
 
+<!-- APP -->
+<div id="app" class="hidden">
+
+  <!-- HEADER -->
+  <div class="flex justify-between items-center mb-4">
+    <h1 class="text-xl font-bold">FAST Grocery CRM PRO</h1>
+    <button onclick="logout()" class="bg-red-600 px-3 py-1 rounded">Logout</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+    <Card title="Customers" id="customersCount"/>
+    <Card title="Products" id="productsCount"/>
+    <Card title="Orders" id="ordersCount"/>
+    <Card title="Revenue" id="revenueCount"/>
+  </div>
+
+  <!-- NAV -->
+  <div class="flex gap-2 mb-4 flex-wrap">
+    <Btn text="Customers" onclick="show('customers')"/>
+    <Btn text="Products" onclick="show('products')"/>
+    <Btn text="Orders" onclick="show('orders')"/>
+  </div>
+
+  <!-- CUSTOMERS -->
+  <div id="customers" class="hidden">
+    <h2 class="font-bold mb-2">Add Customer</h2>
+    <input id="cname" class="input" placeholder="Name"/>
+    <input id="cphone" class="input" placeholder="Phone"/>
+    <button onclick="addCustomer()" class="btn">Save</button>
+
+    <div id="customerList" class="mt-4"></div>
+  </div>
+
+  <!-- PRODUCTS -->
+  <div id="products" class="hidden">
+    <h2 class="font-bold mb-2">Add Product</h2>
+    <input id="pname" class="input" placeholder="Product Name"/>
+    <input id="pprice" class="input" placeholder="Price"/>
+    <button onclick="addProduct()" class="btn">Save Product</button>
+
+    <div id="productList" class="mt-4"></div>
+  </div>
+
+  <!-- ORDERS -->
+  <div id="orders" class="hidden">
+    <h2 class="font-bold mb-2">Create Order</h2>
+
+    <input id="orderPhone" class="input" placeholder="Customer Phone"/>
+
+    <div id="productBox" class="grid grid-cols-2 gap-2 mt-2"></div>
+
+    <button onclick="placeOrder()" class="btn mt-2">Place Order</button>
+
+    <div id="orderList" class="mt-4"></div>
+  </div>
+
+</div>
+</div>
+
+<style>
+.input{width:100%;padding:8px;margin:4px 0;background:#000;border:1px solid #333}
+.btn{background:#2563eb;padding:8px 12px;border-radius:6px;margin-top:6px}
+.card{background:#111;padding:10px;border-radius:10px}
+</style>
+
 <script>
-// ---------------- FIREBASE CONFIG ----------------
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// ---------------- FIREBASE ----------------
 const firebaseConfig = {
-  apiKey: "AIzaSyAlU2uxRP6cITHhrm_BX3-NzW4ybqQhseg",
-  authDomain: "crm-4b389.firebaseapp.com",
-  projectId: "crm-4b389",
-  storageBucket: "crm-4b389.firebasestorage.app",
-  messagingSenderId: "1024129211358",
-  appId: "1:1024129211358:web:340bdd3ddd39b9bdc29b4f",
-  measurementId: "G-8R887T40N1"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID"
 };
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+// ---------------- UI ----------------
+function Card({title, id}){}
+function Btn(props){
+  const btn = document.createElement("button");
+}
+
 // ---------------- LOGIN ----------------
 function login(){
-  const email = document.getElementById("email").value;
-  const pass = document.getElementById("password").value;
-
-  auth.signInWithEmailAndPassword(email, pass)
-  .then(()=> {
-    document.getElementById("loginBox").classList.add("hidden");
-    document.getElementById("dashboard").classList.remove("hidden");
-    loadStats();
-  })
-  .catch(err => alert(err.message));
+  auth.signInWithEmailAndPassword(
+    email.value, password.value
+  ).then(()=>{
+    loginBox.classList.add("hidden");
+    app.classList.remove("hidden");
+    loadAll();
+  }).catch(e=>alert(e.message));
 }
 
 // ---------------- LOGOUT ----------------
 function logout(){
-  auth.signOut().then(()=> location.reload());
+  auth.signOut().then(()=>location.reload());
 }
 
-// ---------------- CUSTOMER ADD ----------------
+// ---------------- NAV ----------------
+function show(id){
+  ["customers","products","orders"].forEach(x=>{
+    document.getElementById(x).classList.add("hidden");
+  });
+  document.getElementById(id).classList.remove("hidden");
+}
+
+// ---------------- CUSTOMERS ----------------
 function addCustomer(){
-  const name = document.getElementById("cname").value;
-  const phone = document.getElementById("cphone").value;
-
   db.collection("customers").add({
-    name,
-    phone,
-    totalOrders: 0,
-    totalSpent: 0,
-    createdAt: new Date()
+    name:cname.value,
+    phone:cphone.value,
+    createdAt:new Date()
   });
-
-  alert("Customer Added!");
-  loadStats();
+  loadCustomers();
 }
 
-// ---------------- STATS ----------------
-function loadStats(){
-
+function loadCustomers(){
   db.collection("customers").get().then(snap=>{
-    document.getElementById("customers").innerText = snap.size;
-  });
-
-  db.collection("orders").get().then(snap=>{
-    document.getElementById("orders").innerText = snap.size;
+    customerList.innerHTML="";
+    snap.forEach(d=>{
+      customerList.innerHTML += `<div class="card">${d.data().name} - ${d.data().phone}</div>`;
+    });
+    customersCount.innerText = snap.size;
   });
 }
 
-// ---------------- AUTH STATE ----------------
+// ---------------- PRODUCTS ----------------
+function addProduct(){
+  db.collection("products").add({
+    name:pname.value,
+    price:parseFloat(pprice.value)
+  });
+  loadProducts();
+}
+
+function loadProducts(){
+  db.collection("products").get().then(snap=>{
+    productBox.innerHTML="";
+    productList.innerHTML="";
+
+    snap.forEach(d=>{
+      const p = d.data();
+
+      productBox.innerHTML += `
+      <div class="card">
+        <input type="checkbox" value="${d.id}"/> ${p.name} - ${p.price}
+      </div>`;
+
+      productList.innerHTML += `<div class="card">${p.name} - ${p.price}</div>`;
+    });
+
+    productsCount.innerText = snap.size;
+  });
+}
+
+// ---------------- ORDERS ----------------
+function placeOrder(){
+  let total = 0;
+
+  db.collection("products").get().then(async snap=>{
+    let items = [];
+
+    snap.forEach(d=>{
+      const checkbox = document.querySelector(`input[value="${d.id}"]`);
+      if(checkbox && checkbox.checked){
+        items.push(d.data());
+        total += d.data().price;
+      }
+    });
+
+    await db.collection("orders").add({
+      phone: orderPhone.value,
+      items,
+      total,
+      createdAt:new Date()
+    });
+
+    alert("Order Placed!");
+    loadOrders();
+  });
+}
+
+function loadOrders(){
+  db.collection("orders").get().then(snap=>{
+    orderList.innerHTML="";
+    let revenue=0;
+
+    snap.forEach(d=>{
+      revenue += d.data().total;
+
+      orderList.innerHTML += `
+      <div class="card">
+        ${d.data().phone} - ${d.data().total} ৳
+      </div>`;
+    });
+
+    ordersCount.innerText = snap.size;
+    revenueCount.innerText = revenue + " ৳";
+  });
+}
+
+// ---------------- LOAD ALL ----------------
+function loadAll(){
+  loadCustomers();
+  loadProducts();
+  loadOrders();
+}
+
+// ---------------- AUTH CHECK ----------------
 auth.onAuthStateChanged(user=>{
   if(user){
-    document.getElementById("loginBox").classList.add("hidden");
-    document.getElementById("dashboard").classList.remove("hidden");
-    loadStats();
+    loginBox.classList.add("hidden");
+    app.classList.remove("hidden");
+    loadAll();
   }
 });
 </script>
